@@ -1,0 +1,35 @@
+apply plugin: 'java'
+apply plugin: 'eclipse-wtp'
+repositories {
+	mavenCentral()
+}
+
+defaultTasks = ['clean', 'jar']
+
+dependencies {
+	compile 'org.apache.commons:commons-lang3:3.0'
+}
+
+ // The below task is used to have all the depended jars in a lib directory so that the lib dir can be used when running the jar.
+ // Reference :: below link. This task needs to be added to the jar task so that, this task executed before jar task gets executed
+ //http://stackoverflow.com/questions/3445825/gradle-how-do-i-build-a-jar-with-a-lib-dir-with-other-jars-in-it
+task copyToLib( type: Copy ) {
+    into "$buildDir/libs/lib"
+    from configurations.runtime
+}
+
+jar {
+dependsOn copyToLib
+    manifest {
+        attributes 'Main-Class': 'StringManipulation'
+    }
+}
+
+
+
+// This task can be used only once when gradle build script is prepared so that gradlew shell script gets created and available as part of the project. 
+// This so generated gradlew script can be used to exceute build even though gradle does not exist in machine where the project is build.
+
+task wrapper(type: Wrapper){
+	gradleVersion = '1.4'
+}
