@@ -1,5 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'eclipse-wtp'
+apply plugin: 'maven-publish'
 repositories {
 	mavenCentral()
 }
@@ -32,4 +33,50 @@ dependsOn copyToLib
 
 task wrapper(type: Wrapper){
 	gradleVersion = '1.4'
+}
+
+//This is defined and used by maven_publish plugin to determine location where artifact will be uploaded
+group = 'com.walmart.atlasGradle'
+//This is used in nexus url. version will be defined in gradle.properties file
+if (version.endsWith('SNAPSHOT')) {
+    ext.repository = "pangaea_snapshots"
+} else {
+    ext.repository = "pangaea_releases"
+}
+//This task compresseses all the file in conf directory
+task tarConfigFiles(type: Tar) {
+  description = 'Tars all files necesary for Apache Config'
+  extension = 'tar.gz'
+  baseName = project.name
+  compression = Compression.GZIP
+  from("conf")
+}
+// This taks is upload the artifact to local maven folder which is ~/.m2/... This can be used to test without nexus repository
+task install{
+    group "Publishing"
+    description "Installs the plugin to mavenLocal"
+    dependsOn publishToMavenLocal
+}
+
+//This plugin actually upload artifact to nexus. Here the tarConfigFiles task is called which returns a tar.gz file
+publishing {
+    publications {
+        websiteConfigFilesArtifact(MavenPublication) {
+            artifact tarConfigFiles
+            pom.withXml{
+                def root= asNode()
+                root.appendNode('name', 'Gradle POM Properties Plugin')
+                root.appendNode('description', 'Gradle plugin produces the neccessary website Config files')
+            }
+        }
+    }
+    repositories{
+        maven{
+            credentials{
+                username 'username'
+                password 'password'
+            }
+            url "http://gec-maven-nexus.walmart.com/nexus/content/repositories/${repository}"
+        }
+    }
 }
