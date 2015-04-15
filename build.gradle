@@ -80,3 +80,6 @@ publishing {
         }
     }
 }
+
+// Command to upload file to Nexus directly
+//curl -XPUT -u nexusUsername:nexusPassword --upload-file SeekerInstaller.jar "http://gec-maven-nexus.walmart.com/nexus/content/repositories/pangaea_releases/quotium/seeker/1.1/seeker-1.1.jar"
